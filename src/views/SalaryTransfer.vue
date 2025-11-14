@@ -46,7 +46,7 @@
                         label="帳號"
                         maxlength="16"
                         clearable
-                      ></v-text-field>
+                      ></v--text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
                       <v-text-field
