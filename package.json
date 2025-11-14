@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "serve": "vue-cli-service serve",
-    "build": "vue-cli-service build",
-    "deploy": "export NODE_OPTIONS=--openssl-legacy-provider && npm run build && gh-pages -d dist"
+    "build": "NODE_OPTIONS=--openssl-legacy-provider vue-cli-service build",
+    "deploy": "npm run build && gh-pages -d dist"
   },
   "dependencies": {
     "core-js": "^3.6.5",
