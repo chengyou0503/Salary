@@ -46,7 +46,7 @@
                         label="帳號"
                         maxlength="16"
                         clearable
-                      ></v--text-field>
+                      ></v-text-field>
                     </v-col>
                     <v-col cols="12" sm="6">
                       <v-text-field
@@ -243,7 +243,7 @@ export default {
       this.close();
     },
     generateFile() {
-      const headerText = 'H' + ' '.repeat(80) + String.fromCharCode(0xc0, 0xb3, 0x20, 0xb5, 0x6f, 0x20, 0xb6, 0xb5, 0x20, 0xa5, 0xd8) + ' '.repeat(9) + String.fromCharCode(0xa5, 0x4e, 0x20, 0xa6, 0xa9, 0x20, 0xb6, 0xb5, 0x20, 0xa5, 0xd8);
+      const headerText = 'H' + ' '.repeat(80) + '中文 範例' + ' '.repeat(9) + '檔名 範例';
       const header = headerText.padEnd(500, ' ') + '\r\n';
 
       const content = this.records
@@ -261,7 +261,9 @@ export default {
             optionalPart += String(record.idNumber).padEnd(10, ' ');
           }
           if (record.email) {
-            optionalPart = optionalPart.padEnd(11, ' ');
+            if (record.idNumber) {
+              optionalPart += ' ';
+            }
             optionalPart += record.email;
           }
           
