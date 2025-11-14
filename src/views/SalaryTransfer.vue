@@ -1,144 +1,142 @@
 <template>
-  <v-container fluid>
-    <div>
-      <v-data-table
-        :headers="headers"
-        :items="records"
-        hide-default-footer
-        class="elevation-1"
-      >
-        <template v-slot:top>
-          <v-toolbar flat>
-            <v-toolbar-title>薪資轉帳</v-toolbar-title>
-            <v-divider class="mx-4" inset vertical></v-divider>
-            <v-spacer></v-spacer>
-            <v-dialog v-model="dialog" max-width="500px">
-              <template v-slot:activator="{ on, attrs }">
-                <v-btn color="primary" dark class="mb-2" @click="importDialog = true">匯入<v-icon small> fas fa-upload </v-icon></v-btn>
-                <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
-                  新增單筆
-                  <v-icon small> fas fa-plus-circle </v-icon>
-                </v-btn>
-              </template>
-              <v-card @keydown.enter.prevent="save">
-                <v-card-title>
-                  <span class="headline">{{ formTitle }}</span>
-                </v-card-title>
-                <v-card-text>
-                  <v-container>
-                    <v-row>
-                      <v-col cols="12" sm="6">
-                        <v-text-field
-                          v-model="editedItem.name"
-                          label="戶名"
-                          clearable
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6">
-                        <v-text-field
-                          v-model="editedItem.idNumber"
-                          label="身分證號 (可選)"
-                          clearable
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12">
-                        <v-text-field
-                          v-model="editedItem.accountNumber"
-                          label="帳號"
-                          maxlength="12"
-                          clearable
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6">
-                        <v-text-field
-                          v-model="editedItem.amount"
-                          label="金額"
-                          type="number"
-                          clearable
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12" sm="6">
-                        <v-text-field
-                          v-model="editedItem.bankCode"
-                          label="銀行代碼"
-                          maxlength="4"
-                          clearable
-                        ></v-text-field>
-                      </v-col>
-                      <v-col cols="12">
-                        <v-text-field
-                          v-model="editedItem.email"
-                          label="Email (可選)"
-                          clearable
-                        ></v-text-field>
-                      </v-col>
-                    </v-row>
-                  </v-container>
-                </v-card-text>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn color="blue darken-1" text @click="close">取消</v-btn>
-                  <v-btn color="blue darken-1" text @click="save">儲存</v-btn>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-            <v-dialog v-model="dialogDelete" max-width="500px">
-              <v-card>
-                <v-card-title class="headline">請問是否要移除?</v-card-title>
-                <v-card-actions>
-                  <v-spacer></v-spacer>
-                  <v-btn color="blue darken-1" text @click="closeDelete">否</v-btn>
-                  <v-btn color="blue darken-1" text @click="deleteItemConfirm">是</v-btn>
-                  <v-spacer></v-spacer>
-                </v-card-actions>
-              </v-card>
-            </v-dialog>
-          </v-toolbar>
-        </template>
-        <template v-slot:body="{ items }">
-          <draggable v-model="records" tag="tbody">
-            <tr v-for="(item, index) in items" :key="index">
-              <td>
-                <v-icon small class="page-move">
-                  fas fa-align-justify
-                </v-icon>
-              </td>
-              <td>{{ item.name }}</td>
-              <td>{{ item.accountNumber }}</td>
-              <td>{{ item.amount }}</td>
-              <td>{{ item.bankCode }}</td>
-              <td>{{ item.idNumber }}</td>
-              <td>{{ item.email }}</td>
-              <td>
-                <v-icon small class="mr-2" @click="editItem(item)">
-                  fas fa-edit
-                </v-icon>
-                <v-icon small @click="deleteItem(item)"> fas fa-trash </v-icon>
-              </td>
-            </tr>
-          </draggable>
-        </template>
-      </v-data-table>
-      <br />
-      <v-btn color="success" @click="generateFile" class="float-right">
-        匯出(給Ecash)
-        <v-icon small>fas fa-download</v-icon>
-      </v-btn>
-      <v-dialog v-model="importDialog" width="85%">
-        <v-card>
-          <v-card-title primary-title> 匯入舊資料 </v-card-title>
-          <v-card-text>
-            <v-textarea
-              outlined
-              label="請手動貼上之前匯出的txt檔案內容"
-              v-model="importText"
-            ></v-textarea>
-          </v-card-text>
-        </v-card>
-        <v-btn color="info" @click="importFromText">匯入</v-btn>
-      </v-dialog>
-    </div>
-  </v-container>
+  <div>
+    <v-data-table
+      :headers="headers"
+      :items="records"
+      hide-default-footer
+      class="elevation-1"
+    >
+      <template v-slot:top>
+        <v-toolbar flat>
+          <v-toolbar-title>薪資轉帳</v-toolbar-title>
+          <v-divider class="mx-4" inset vertical></v-divider>
+          <v-spacer></v-spacer>
+          <v-dialog v-model="dialog" max-width="500px">
+            <template v-slot:activator="{ on, attrs }">
+              <v-btn color="primary" dark class="mb-2" @click="importDialog = true">匯入<v-icon small> fas fa-upload </v-icon></v-btn>
+              <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
+                新增單筆
+                <v-icon small> fas fa-plus-circle </v-icon>
+              </v-btn>
+            </template>
+            <v-card @keydown.enter.prevent="save">
+              <v-card-title>
+                <span class="headline">{{ formTitle }}</span>
+              </v-card-title>
+              <v-card-text>
+                <v-container>
+                  <v-row>
+                    <v-col cols="12" sm="6">
+                      <v-text-field
+                        v-model="editedItem.name"
+                        label="戶名"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                      <v-text-field
+                        v-model="editedItem.idNumber"
+                        label="身分證號 (可選)"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="editedItem.accountNumber"
+                        label="帳號"
+                        maxlength="16"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                      <v-text-field
+                        v-model="editedItem.amount"
+                        label="金額"
+                        type="number"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" sm="6">
+                      <v-text-field
+                        v-model="editedItem.bankCode"
+                        label="銀行代碼"
+                        maxlength="3"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="editedItem.email"
+                        label="Email (可選)"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                  </v-row>
+                </v-container>
+              </v-card-text>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="blue darken-1" text @click="close">取消</v-btn>
+                <v-btn color="blue darken-1" text @click="save">儲存</v-btn>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+          <v-dialog v-model="dialogDelete" max-width="500px">
+            <v-card>
+              <v-card-title class="headline">請問是否要移除?</v-card-title>
+              <v-card-actions>
+                <v-spacer></v-spacer>
+                <v-btn color="blue darken-1" text @click="closeDelete">否</v-btn>
+                <v-btn color="blue darken-1" text @click="deleteItemConfirm">是</v-btn>
+                <v-spacer></v-spacer>
+              </v-card-actions>
+            </v-card>
+          </v-dialog>
+        </v-toolbar>
+      </template>
+      <template v-slot:body="{ items }">
+        <draggable v-model="records" tag="tbody">
+          <tr v-for="(item, index) in items" :key="index">
+            <td>
+              <v-icon small class="page-move">
+                fas fa-align-justify
+              </v-icon>
+            </td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.accountNumber }}</td>
+            <td>{{ item.amount }}</td>
+            <td>{{ item.bankCode }}</td>
+            <td>{{ item.idNumber }}</td>
+            <td>{{ item.email }}</td>
+            <td>
+              <v-icon small class="mr-2" @click="editItem(item)">
+                fas fa-edit
+              </v-icon>
+              <v-icon small @click="deleteItem(item)"> fas fa-trash </v-icon>
+            </td>
+          </tr>
+        </draggable>
+      </template>
+    </v-data-table>
+    <br />
+    <v-btn color="success" @click="generateFile" class="float-right">
+      匯出(給Ecash)
+      <v-icon small>fas fa-download</v-icon>
+    </v-btn>
+    <v-dialog v-model="importDialog" width="85%">
+      <v-card>
+        <v-card-title primary-title> 匯入舊資料 </v-card-title>
+        <v-card-text>
+          <v-textarea
+            outlined
+            label="請手動貼上之前匯出的txt檔案內容"
+            v-model="importText"
+          ></v-textarea>
+        </v-card-text>
+      </v-card>
+      <v-btn color="info" @click="importFromText">匯入</v-btn>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
@@ -245,14 +243,16 @@ export default {
       this.close();
     },
     generateFile() {
-      const header = 'H'.padEnd(500, ' ') + '\r\n';
+      const headerText = 'H' + ' '.repeat(80) + '\u4e2d\u6587 \u7bc4\u4f8b' + ' '.repeat(9) + '\u6a94\u540d \u7bc4\u4f8b';
+      const header = headerText.padEnd(500, ' ') + '\r\n';
+
       const content = this.records
         .map(record => {
           const recordType = '20000';
-          const accountNumber = String(record.accountNumber || '').padEnd(12, ' ');
+          const accountNumber = String(record.accountNumber || '').padEnd(16, ' ');
           const flag = '0';
-          const amount = String((record.amount || 0) * 10).padStart(14, '0');
-          const bankCode = String(record.bankCode || '').padStart(4, '0');
+          const amount = String((record.amount || 0) * 100).padStart(14, '0');
+          const bankCode = String(record.bankCode || '').padStart(3, '0');
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
           
@@ -261,7 +261,7 @@ export default {
             optionalPart += String(record.idNumber).padEnd(10, ' ');
           }
           if (record.email) {
-            optionalPart = optionalPart.padEnd(11, ' '); // Add space if ID exists
+            optionalPart = optionalPart.padEnd(11, ' ');
             optionalPart += record.email;
           }
           
@@ -292,16 +292,18 @@ export default {
       const lines = this.importText.split(/\r?\n/).filter(line => line.startsWith('20000'));
       this.records = lines.map(line => {
         const record = {};
-        record.accountNumber = line.substring(5, 17).trim();
-        const amountStr = line.substring(18, 32);
-        record.amount = parseInt(amountStr, 10) / 10;
-        record.bankCode = line.substring(32, 36).trim();
+        record.accountNumber = line.substring(5, 21).trim();
+        const amountStr = line.substring(22, 36);
+        record.amount = parseInt(amountStr, 10) / 100;
+        record.bankCode = line.substring(36, 39).trim();
         
-        const optionalPart = line.substring(36).trim();
-        const parts = optionalPart.split(/\s+/).filter(p => p);
+        const optionalPart = line.substring(39).trim();
+        const idNumberMatch = optionalPart.match(/^[A-Z0-9]{10}/);
+        record.idNumber = idNumberMatch ? idNumberMatch[0] : '';
         
-        record.idNumber = parts[0] || '';
-        record.email = parts[1] || '';
+        const emailPart = idNumberMatch ? optionalPart.substring(10).trim() : optionalPart;
+        record.email = emailPart.split(/\s+/)[0] || '';
+        
         record.name = '';
         
         return record;
