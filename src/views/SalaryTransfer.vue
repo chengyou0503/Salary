@@ -228,10 +228,11 @@ export default {
         .map(record => {
           const recordType = '20000';
           const accountNumber = String(record.accountNumber).padEnd(12, ' ');
-          const unknownField = '0';
-          const amount = String(record.amount).padStart(7, '0');
+          const flag = '0';
+          const amount = (String(record.amount) + '0').padStart(14, '0');
           const bankCode = String(record.bankCode).padEnd(4, ' ');
-          let line = `${recordType}${accountNumber}${unknownField}00000${amount}${bankCode}`;
+          
+          let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
           return line.padEnd(500, ' ');
         })
         .join('\r\n');
@@ -260,8 +261,9 @@ export default {
       lines.forEach((line) => {
         let record = {};
         record["accountNumber"] = line.slice(5, 17).trim();
-        record["amount"] = parseInt(line.slice(23, 30));
-        record["bankCode"] = line.slice(30, 34).trim();
+        const amountStr = line.slice(18, 32);
+        record["amount"] = parseInt(amountStr, 10) / 10;
+        record["bankCode"] = line.slice(32, 36).trim();
         record["name"] = ""; // Name is not in the file
         this.records.push(record);
       });
