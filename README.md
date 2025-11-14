@@ -1,6 +1,4 @@
 # e-Cash editor
-
-
 ![e-Cash preview](./public/2021-02-07_05-00.png)
 
 ## Demo Site
