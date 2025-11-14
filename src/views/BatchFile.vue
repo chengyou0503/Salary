@@ -245,9 +245,24 @@ export default {
       let dataUri = this._prepareContent();
       let downloadLink = this.$refs.downloadLink;
       downloadLink.setAttribute("href", dataUri);
+
+      const today = new Date();
+      let year = today.getFullYear();
+      let month = today.getMonth(); // 0-11
+
+      if (month === 0) { // 如果是1月，則上個月是去年的12月
+        month = 12;
+        year -= 1;
+      } else {
+        month -= 1;
+      }
+
+      const minguoYear = year - 1911;
+      const formattedMonth = String(month + 1).padStart(2, '0'); // 月份加1並補零
+
       downloadLink.setAttribute(
         "download",
-        "ecash_" + Date.now().toString() + ".txt"
+        `ecash_${minguoYear}${formattedMonth}.txt`
       );
       downloadLink.click();
     },
