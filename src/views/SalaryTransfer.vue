@@ -77,30 +77,34 @@ export default {
     parseFileContent(content) {
       const lines = content.split('\n').filter(line => line.trim().length > 0);
       this.parsedData = lines.slice(1).map(line => {
-        const recordType = line.substring(0, 5);
-        if (recordType === '20000') {
+        if (line.startsWith('20000')) {
           const accountNumber = line.substring(5, 17);
-          const amount = parseInt(line.substring(18, 25), 10);
-          const bankCode = line.substring(25, 29);
+          const amount = parseInt(line.substring(18, 30), 10);
+          const bankCode = line.substring(30, 35);
           return { accountNumber, amount, bankCode };
         }
         return null;
       }).filter(item => item !== null);
     },
-    async generateFile() {
-      const response = await fetch('/default.template');
-      const template = await response.text();
-      
-      let output = template;
-      this.parsedData.forEach((row, index) => {
-        output += `AccountCode${index + 1}=${row.accountNumber}\n`;
-        output += `AccountAmount${index + 1}=${row.amount}\n`;
+    generateFile() {
+      let output = 'H\n'; // Header line
+
+      this.parsedData.forEach(row => {
+        const recordType = '20000';
+        const accountNumber = row.accountNumber.padEnd(12, ' ');
+        const flag = '0';
+        const amount = String(row.amount).padStart(12, '0');
+        const bankCode = row.bankCode.padEnd(5, ' ');
+        
+        let line = recordType + accountNumber + flag + amount + bankCode;
+        line = line.padEnd(500, ' '); // Pad the line to the required length
+        output += line + '\n';
       });
 
-      const blob = new Blob([output], { type: 'text/plain;charset=utf-8' });
+      const blob = new Blob([output], { type: 'text/plain;charset=big5' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'salary_transfer.txt';
+      link.download = 'salary_transfer_export.txt';
       link.click();
       URL.revokeObjectURL(link.href);
     },
