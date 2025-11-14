@@ -223,19 +223,19 @@ export default {
       this.close();
     },
     generateFile() {
-      let header = 'H'.padEnd(500, ' ') + '\n';
+      let header = 'H'.padEnd(500, ' ') + '\r\n';
       let content = this.records
         .map(record => {
           const recordType = '20000';
           const accountNumber = rightPad(record.accountNumber || '', 12);
           const flag = '0';
           const amount = leftPad(String((record.amount || 0) * 10), 14);
-          const bankCode = rightPad(record.bankCode || '', 4);
+          const bankCode = leftPad(record.bankCode || '', 4);
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
           return line.padEnd(500, ' ');
         })
-        .join('\n');
+        .join('\r\n');
 
       const fileContent = header + content;
       const blob = new Blob([fileContent], { type: 'text/plain;charset=big5' });
