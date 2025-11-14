@@ -31,6 +31,13 @@
                   <v-row>
                     <v-col cols="12">
                       <v-text-field
+                        v-model="editedItem.name"
+                        label="戶名"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
                         v-model="editedItem.accountNumber"
                         label="帳號"
                         maxlength="12"
@@ -76,9 +83,26 @@
           </v-dialog>
         </v-toolbar>
       </template>
-      <template v-slot:item.actions="{ item }">
-        <v-icon small class="mr-2" @click="editItem(item)">fas fa-edit</v-icon>
-        <v-icon small @click="deleteItem(item)">fas fa-trash</v-icon>
+      <template v-slot:body="{ items }">
+        <draggable v-model="records" tag="tbody">
+          <tr v-for="(item, index) in items" :key="index">
+            <td>
+              <v-icon small class="page-move">
+                fas fa-align-justify
+              </v-icon>
+            </td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.accountNumber }}</td>
+            <td>{{ item.amount }}</td>
+            <td>{{ item.bankCode }}</td>
+            <td>
+              <v-icon small class="mr-2" @click="editItem(item)">
+                fas fa-edit
+              </v-icon>
+              <v-icon small @click="deleteItem(item)"> fas fa-trash </v-icon>
+            </td>
+          </tr>
+        </draggable>
       </template>
     </v-data-table>
     <br />
@@ -90,13 +114,20 @@
 </template>
 
 <script>
+import draggable from "vuedraggable";
+import AES from "crypto-js/aes";
+import encUtf8 from "crypto-js/enc-utf8";
+
 export default {
   name: 'SalaryTransfer',
+  components: { draggable },
   data() {
     return {
       dialog: false,
       dialogDelete: false,
       headers: [
+        { text: "排序", value: "sort", sortable: false },
+        { text: '戶名', value: 'name' },
         { text: '帳號', value: 'accountNumber' },
         { text: '金額', value: 'amount' },
         { text: '銀行代碼', value: 'bankCode' },
@@ -105,11 +136,13 @@ export default {
       records: [],
       editedIndex: -1,
       editedItem: {
+        name: '',
         accountNumber: '',
         amount: 0,
         bankCode: '',
       },
       defaultItem: {
+        name: '',
         accountNumber: '',
         amount: 0,
         bankCode: '',
@@ -128,6 +161,15 @@ export default {
     dialogDelete(val) {
       val || this.closeDelete();
     },
+    records: {
+      handler() {
+        this.saveToLocalStorage();
+      },
+      deep: true,
+    },
+  },
+  created() {
+    this.loadFromLocalStorage();
   },
   methods: {
     editItem(item) {
@@ -189,10 +231,32 @@ export default {
       link.click();
       document.body.removeChild(link);
     },
+    saveToLocalStorage() {
+      let encryptedStr = encrypt(JSON.stringify(this.records), "SalaryTransferKey");
+      localStorage.setItem("salaryRecords", encryptedStr);
+    },
+    loadFromLocalStorage() {
+      const savedRecords = localStorage.getItem("salaryRecords");
+      if (savedRecords) {
+        let decryptedStr = decrypt(savedRecords, "SalaryTransferKey");
+        this.records = JSON.parse(decryptedStr);
+      }
+    },
   },
 };
+
+function encrypt(str, key) {
+  return AES.encrypt(str, key).toString();
+}
+
+function decrypt(str, key) {
+  let bytes = AES.decrypt(str, key);
+  return bytes.toString(encUtf8);
+}
 </script>
 
 <style scoped>
-/* 在這裡添加組件特有的樣式 */
+.page-move {
+  cursor: move;
+}
 </style>
