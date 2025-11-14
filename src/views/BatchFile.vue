@@ -26,7 +26,7 @@
               </v-btn>
             </template>
 
-            <v-card>
+            <v-card @keydown.enter.prevent="save">
               <v-card-title>
                 <span class="headline">{{ formTitle }}</span>
               </v-card-title>
@@ -104,6 +104,28 @@
           </v-dialog>
         </v-toolbar>
       </template>
+      <template v-slot:body="{ items }">
+        <draggable v-model="records" tag="tbody">
+          <tr v-for="(item, index) in items" :key="index">
+            <td>
+              <v-icon small class="page-move">
+                fas fa-align-justify
+              </v-icon>
+            </td>
+            <td>{{ item.bankNo }}</td>
+            <td>{{ item.name }}</td>
+            <td>{{ item.acc }}</td>
+            <td>{{ item.money }}</td>
+            <td>{{ item.email }}</td>
+            <td>
+              <v-icon small class="mr-2" @click="editItem(item)">
+                fas fa-edit
+              </v-icon>
+              <v-icon small @click="deleteItem(item)"> fas fa-trash </v-icon>
+            </td>
+          </tr>
+        </draggable>
+      </template>
       <template v-slot:item.actions="{ item }">
         <v-icon small class="mr-2" @click="editItem(item)">
           fas fa-edit
@@ -139,13 +161,16 @@
 <script>
 import AES from "crypto-js/aes";
 import encUtf8 from "crypto-js/enc-utf8";
+import draggable from "vuedraggable";
 
 export default {
   name: "BatchFile",
-  components: {},
+  components: { draggable },
   data() {
     return {
+      drag: false,
       headers: [
+        { text: "排序", value: "sort", sortable: false },
         {
           text: "銀行代號",
           value: "bankNo",
