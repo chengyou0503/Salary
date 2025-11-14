@@ -229,8 +229,8 @@ export default {
           const recordType = '20000';
           const accountNumber = rightPad(record.accountNumber || '', 12);
           const flag = '0';
-          const amount = leftPad((String(record.amount || '0') + '0'), 14);
-          const bankCode = rightPad(record.bankCode || '', 4);
+          const amount = leftPad(String((record.amount || 0) * 10), 14);
+          const bankCode = leftPad(record.bankCode || '', 4);
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
           return line.padEnd(500, ' ');
@@ -295,12 +295,18 @@ function decrypt(str, key) {
 
 function leftPad(str, max) {
   str = String(str);
-  return str.length < max ? leftPad("0" + str, max) : str;
+  while (str.length < max) {
+    str = "0" + str;
+  }
+  return str;
 }
 
 function rightPad(str, max) {
   str = String(str);
-  return str.length < max ? rightPad(str + " ", max) : str;
+  while (str.length < max) {
+    str = str + " ";
+  }
+  return str;
 }
 </script>
 
