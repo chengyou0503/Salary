@@ -243,7 +243,7 @@ export default {
       this.close();
     },
     generateFile() {
-      const headerText = 'H' + ' '.repeat(80) + '\u4e2d\u6587 \u7bc4\u4f8b' + ' '.repeat(9) + '\u6a94\u540d \u7bc4\u4f8b';
+      const headerText = 'H' + ' '.repeat(80) + String.fromCharCode(0xc0, 0xb3, 0x20, 0xb5, 0x6f, 0x20, 0xb6, 0xb5, 0x20, 0xa5, 0xd8) + ' '.repeat(9) + String.fromCharCode(0xa5, 0x4e, 0x20, 0xa6, 0xa9, 0x20, 0xb6, 0xb5, 0x20, 0xa5, 0xd8);
       const header = headerText.padEnd(500, ' ') + '\r\n';
 
       const content = this.records
