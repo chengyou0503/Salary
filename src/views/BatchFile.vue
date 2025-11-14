@@ -118,12 +118,6 @@
     <v-btn color="success" @click="exportToTxt"  class="float-right">匯出(給Ecash)<v-icon small> fas fa-download </v-icon></v-btn>
     <a id="downloadAnchorElem" ref="downloadLink"></a>
 
-    <v-btn color="success" @click="saveToLocalStorage"
-      >Save(localStorage)</v-btn
-    >
-    <v-btn color="success" @click="loadFromLocalStorage"
-      >Load(localStorage)</v-btn
-    >
     <br />
     
     <v-dialog v-model="importDialog" width="85%">
@@ -210,6 +204,16 @@ export default {
     dialogDelete(val) {
       val || this.closeDelete();
     },
+    records: {
+      handler() {
+        this.saveToLocalStorage();
+      },
+      deep: true,
+    },
+  },
+
+  created() {
+    this.loadFromLocalStorage();
   },
 
   methods: {
@@ -266,10 +270,11 @@ export default {
     },
 
     loadFromLocalStorage() {
-      console.log(localStorage.getItem("records"));
-      let decryptedStr = decrypt(localStorage.getItem("records"), "AAA");
-      console.log(decryptedStr);
-      console.log(JSON.parse(decryptedStr));
+      const savedRecords = localStorage.getItem("records");
+      if (savedRecords) {
+        let decryptedStr = decrypt(savedRecords, "AAA");
+        this.records = JSON.parse(decryptedStr);
+      }
     },
 
     editItem(item) {
