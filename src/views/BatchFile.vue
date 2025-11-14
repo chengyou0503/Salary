@@ -3,12 +3,12 @@
     <v-data-table
       :headers="headers"
       :items="records"
-      :items-per-page="20"
+      hide-default-footer
       class="elevation-1"
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title>e-Cash Editor</v-toolbar-title>
+          <v-toolbar-title>中信匯款</v-toolbar-title>
           <v-divider class="mx-4" inset vertical></v-divider>
           <v-spacer></v-spacer>
           <v-dialog v-model="dialog" max-width="500px">
@@ -39,6 +39,13 @@
                         v-model="editedItem.bankNo"
                         label="銀行代號"
                         maxlength="3"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12" sm="6" md="6">
+                      <v-text-field
+                        v-model="editedItem.name"
+                        label="戶名"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -151,6 +158,10 @@ export default {
           value: "bankNo",
         },
         {
+          text: "戶名",
+          value: "name",
+        },
+        {
           text: "帳號",
           value: "acc",
         },
@@ -167,12 +178,14 @@ export default {
       records: [
         {
           bankNo: "822",
+          name: "王大明",
           acc: "123456789012",
           money: 168,
           email: "user1@example.com",
         },
         {
           bankNo: "822",
+          name: "陳小姐",
           acc: "987654321098",
           money: 888,
           email: "user2@example.com",
@@ -184,13 +197,15 @@ export default {
       dialogDelete: false,
       editedIndex: -1,
       editedItem: {
-        bankNo: "",
+        bankNo: "822",
+        name: "",
         acc: "",
         money: 0,
         email: "",
       },
       defaultItem: {
-        bankNo: "",
+        bankNo: "822",
+        name: "",
         acc: "",
         money: 0,
         email: "",
@@ -253,6 +268,7 @@ export default {
         record["acc"] = line.slice(3, 19);
         record["money"] = parseInt(line.slice(19, 33));
         record["email"] = line.slice(35, -1).replace(/\s/g, "");
+        record["name"] = "";
         this.records.push(record);
       });
       this.importDialog = false;
