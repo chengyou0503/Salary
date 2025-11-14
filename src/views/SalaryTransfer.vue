@@ -223,14 +223,14 @@ export default {
       this.close();
     },
     generateFile() {
-      let header = 'H'.padEnd(500, ' ') + '\r\n';
-      let content = this.records
+      const header = 'H'.padEnd(500, ' ') + '\r\n';
+      const content = this.records
         .map(record => {
           const recordType = '20000';
-          const accountNumber = rightPad(record.accountNumber || '', 12);
+          const accountNumber = String(record.accountNumber || '').padEnd(12, ' ');
           const flag = '0';
-          const amount = leftPad(String((record.amount || 0) * 10), 14);
-          const bankCode = leftPad(record.bankCode || '', 4);
+          const amount = String((record.amount || 0) * 10).padStart(14, '0');
+          const bankCode = String(record.bankCode || '').padStart(4, '0');
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
           return line.padEnd(500, ' ');
@@ -256,7 +256,7 @@ export default {
         alert("請先輸入資料");
         return
       }
-      let lines = this.importText.split("\n").filter(line => line.trim().startsWith('20000'));
+      let lines = this.importText.split(/\r?\n/).filter(line => line.trim().startsWith('20000'));
       this.records = [];
       lines.forEach((line) => {
         let record = {};
@@ -264,7 +264,7 @@ export default {
         const amountStr = line.slice(18, 32);
         record["amount"] = parseInt(amountStr, 10) / 10;
         record["bankCode"] = line.slice(32, 36).trim();
-        record["name"] = ""; // Name is not in the file
+        record["name"] = "";
         this.records.push(record);
       });
       this.importDialog = false;
@@ -291,22 +291,6 @@ function encrypt(str, key) {
 function decrypt(str, key) {
   let bytes = AES.decrypt(str, key);
   return bytes.toString(encUtf8);
-}
-
-function leftPad(str, max) {
-  str = String(str);
-  while (str.length < max) {
-    str = "0" + str;
-  }
-  return str;
-}
-
-function rightPad(str, max) {
-  str = String(str);
-  while (str.length < max) {
-    str = str + " ";
-  }
-  return str;
 }
 </script>
 
