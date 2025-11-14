@@ -227,10 +227,10 @@ export default {
       let content = this.records
         .map(record => {
           const recordType = '20000';
-          const accountNumber = String(record.accountNumber).padEnd(12, ' ');
+          const accountNumber = rightPad(record.accountNumber || '', 12);
           const flag = '0';
-          const amount = (String(record.amount) + '0').padStart(14, '0');
-          const bankCode = String(record.bankCode).padEnd(4, ' ');
+          const amount = leftPad((String(record.amount || '0') + '0'), 14);
+          const bankCode = rightPad(record.bankCode || '', 4);
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
           return line.padEnd(500, ' ');
@@ -291,6 +291,16 @@ function encrypt(str, key) {
 function decrypt(str, key) {
   let bytes = AES.decrypt(str, key);
   return bytes.toString(encUtf8);
+}
+
+function leftPad(str, max) {
+  str = String(str);
+  return str.length < max ? leftPad("0" + str, max) : str;
+}
+
+function rightPad(str, max) {
+  str = String(str);
+  return str.length < max ? rightPad(str + " ", max) : str;
 }
 </script>
 
