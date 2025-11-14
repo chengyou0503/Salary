@@ -1,5 +1,5 @@
 # e-Cash editor
-*本程式非中國信託官方工具，純屬方便個人編輯使用
+
 
 ![e-Cash preview](./public/2021-02-07_05-00.png)
 

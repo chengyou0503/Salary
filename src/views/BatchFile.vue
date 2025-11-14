@@ -118,12 +118,12 @@
     <v-btn color="success" @click="exportToTxt"  class="float-right">匯出(給Ecash)<v-icon small> fas fa-download </v-icon></v-btn>
     <a id="downloadAnchorElem" ref="downloadLink"></a>
 
-    <!-- <v-btn color="success" @click="saveToLocalStorage"
+    <v-btn color="success" @click="saveToLocalStorage"
       >Save(localStorage)</v-btn
     >
     <v-btn color="success" @click="loadFromLocalStorage"
       >Load(localStorage)</v-btn
-    > -->
+    >
     <br />
     
     <v-dialog v-model="importDialog" width="85%">
@@ -175,22 +175,7 @@ export default {
         },
         { text: "操作", value: "actions", sortable: false },
       ],
-      records: [
-        {
-          bankNo: "822",
-          name: "王大明",
-          acc: "123456789012",
-          money: 168,
-          email: "user1@example.com",
-        },
-        {
-          bankNo: "822",
-          name: "陳小姐",
-          acc: "987654321098",
-          money: 888,
-          email: "user2@example.com",
-        },
-      ],
+      records: [],
       importDialog: false,
       importText: null,
       dialog: false,
