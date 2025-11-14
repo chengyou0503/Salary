@@ -124,6 +124,7 @@
       <v-icon small>fas fa-download</v-icon>
     </v-btn>
     <v-btn color="info" href="/Salary/salary_test.txt" download="salary_test.txt">下載測試檔</v-btn>
+    <v-btn color="info" href="/Salary/salary_exact_copy.txt" download="salary_exact_copy.txt">下載完全複製測試檔</v-btn>
     <v-dialog v-model="importDialog" width="85%">
       <v-card>
         <v-card-title primary-title> 匯入舊資料 </v-card-title>
