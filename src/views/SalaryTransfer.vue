@@ -27,10 +27,17 @@
                 <v-card-text>
                   <v-container>
                     <v-row>
-                      <v-col cols="12">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="editedItem.name"
                           label="戶名"
+                          clearable
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12" sm="6">
+                        <v-text-field
+                          v-model="editedItem.idNumber"
+                          label="身分證號 (可選)"
                           clearable
                         ></v-text-field>
                       </v-col>
@@ -42,7 +49,7 @@
                           clearable
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="editedItem.amount"
                           label="金額"
@@ -50,11 +57,18 @@
                           clearable
                         ></v-text-field>
                       </v-col>
-                      <v-col cols="12">
+                      <v-col cols="12" sm="6">
                         <v-text-field
                           v-model="editedItem.bankCode"
                           label="銀行代碼"
                           maxlength="4"
+                          clearable
+                        ></v-text-field>
+                      </v-col>
+                      <v-col cols="12">
+                        <v-text-field
+                          v-model="editedItem.email"
+                          label="Email (可選)"
                           clearable
                         ></v-text-field>
                       </v-col>
@@ -93,6 +107,8 @@
               <td>{{ item.accountNumber }}</td>
               <td>{{ item.amount }}</td>
               <td>{{ item.bankCode }}</td>
+              <td>{{ item.idNumber }}</td>
+              <td>{{ item.email }}</td>
               <td>
                 <v-icon small class="mr-2" @click="editItem(item)">
                   fas fa-edit
@@ -145,6 +161,8 @@ export default {
         { text: '帳號', value: 'accountNumber' },
         { text: '金額', value: 'amount' },
         { text: '銀行代碼', value: 'bankCode' },
+        { text: '身分證號', value: 'idNumber' },
+        { text: 'Email', value: 'email' },
         { text: '操作', value: 'actions', sortable: false },
       ],
       records: [],
@@ -154,12 +172,16 @@ export default {
         accountNumber: '',
         amount: 0,
         bankCode: '822',
+        idNumber: '',
+        email: '',
       },
       defaultItem: {
         name: '',
         accountNumber: '',
         amount: 0,
         bankCode: '822',
+        idNumber: '',
+        email: '',
       },
     };
   },
@@ -233,6 +255,17 @@ export default {
           const bankCode = String(record.bankCode || '').padStart(4, '0');
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
+          
+          let optionalPart = '';
+          if (record.idNumber) {
+            optionalPart += String(record.idNumber).padEnd(10, ' ');
+          }
+          if (record.email) {
+            optionalPart = optionalPart.padEnd(11, ' '); // Add space if ID exists
+            optionalPart += record.email;
+          }
+          
+          line += optionalPart;
           return line.padEnd(500, ' ');
         })
         .join('\r\n');
@@ -252,32 +285,38 @@ export default {
       document.body.removeChild(link);
     },
     importFromText() {
-      if (this.importText == null || this.importText.length == 0) {
+      if (!this.importText) {
         alert("請先輸入資料");
-        return
+        return;
       }
-      let lines = this.importText.split(/\r?\n/).filter(line => line.trim().startsWith('20000'));
-      this.records = [];
-      lines.forEach((line) => {
-        let record = {};
-        record["accountNumber"] = line.slice(5, 17).trim();
-        const amountStr = line.slice(18, 32);
-        record["amount"] = parseInt(amountStr, 10) / 10;
-        record["bankCode"] = line.slice(32, 36).trim();
-        record["name"] = "";
-        this.records.push(record);
+      const lines = this.importText.split(/\r?\n/).filter(line => line.startsWith('20000'));
+      this.records = lines.map(line => {
+        const record = {};
+        record.accountNumber = line.substring(5, 17).trim();
+        const amountStr = line.substring(18, 32);
+        record.amount = parseInt(amountStr, 10) / 10;
+        record.bankCode = line.substring(32, 36).trim();
+        
+        const optionalPart = line.substring(36).trim();
+        const parts = optionalPart.split(/\s+/).filter(p => p);
+        
+        record.idNumber = parts[0] || '';
+        record.email = parts[1] || '';
+        record.name = '';
+        
+        return record;
       });
       this.importDialog = false;
       alert("匯入成功");
     },
     saveToLocalStorage() {
-      let encryptedStr = encrypt(JSON.stringify(this.records), "SalaryTransferKey");
+      const encryptedStr = encrypt(JSON.stringify(this.records), "SalaryTransferKey");
       localStorage.setItem("salaryRecords", encryptedStr);
     },
     loadFromLocalStorage() {
       const savedRecords = localStorage.getItem("salaryRecords");
       if (savedRecords) {
-        let decryptedStr = decrypt(savedRecords, "SalaryTransferKey");
+        const decryptedStr = decrypt(savedRecords, "SalaryTransferKey");
         this.records = JSON.parse(decryptedStr);
       }
     },
