@@ -44,7 +44,7 @@
                       <v-text-field
                         v-model="editedItem.accountNumber"
                         label="帳號"
-                        maxlength="16"
+                        maxlength="12"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -60,7 +60,7 @@
                       <v-text-field
                         v-model="editedItem.bankCode"
                         label="銀行代碼"
-                        maxlength="3"
+                        maxlength="4"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -243,32 +243,34 @@ export default {
       this.close();
     },
     generateFile() {
-      const headerText = 'H' + ' '.repeat(80) + '中文 範例' + ' '.repeat(9) + '檔名 範例';
-      const header = headerText.padEnd(500, ' ') + '\r\n';
+      // Header line with Big5 characters and specific spacing
+      const headerPart1 = 'H' + ' '.repeat(65);
+      const headerPart2 = '應 發 項 目' + ' '.repeat(9) + '代 扣 項 目';
+      const header = (headerPart1 + headerPart2).padEnd(500, ' ') + '\r\n';
 
       const content = this.records
         .map(record => {
           const recordType = '20000';
-          const accountNumber = String(record.accountNumber || '').padEnd(16, ' ');
-          const flag = '0';
-          const amount = String((record.amount || 0) * 100).padStart(14, '0');
-          const bankCode = String(record.bankCode || '').padStart(3, '0');
+          const accountNumber = String(record.accountNumber || '').padEnd(12, ' '); // 12 chars, right-padded with spaces
+          const flag = '0'; // 1 char
+          const amount = String((record.amount || 0) * 100).padStart(14, '0'); // 14 chars, left-padded with zeros
+          const bankCode = String(record.bankCode || '').padStart(4, '0'); // 4 chars, left-padded with zeros
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
           
           let optionalPart = '';
           if (record.idNumber) {
-            optionalPart += String(record.idNumber).padEnd(10, ' ');
+            optionalPart += String(record.idNumber).padEnd(10, ' '); // 10 chars, right-padded with spaces
+          } else {
+            optionalPart += ' '.repeat(10); // Reserve 10 spaces if no ID
           }
+
           if (record.email) {
-            if (record.idNumber) {
-              optionalPart += ' ';
-            }
-            optionalPart += record.email;
+            optionalPart += ' ' + record.email; // Precede email with a space
           }
           
           line += optionalPart;
-          return line.padEnd(500, ' ');
+          return line.padEnd(500, ' '); // Pad entire line to 500 chars
         })
         .join('\r\n');
 
@@ -294,17 +296,22 @@ export default {
       const lines = this.importText.split(/\r?\n/).filter(line => line.startsWith('20000'));
       this.records = lines.map(line => {
         const record = {};
-        record.accountNumber = line.substring(5, 21).trim();
-        const amountStr = line.substring(22, 36);
+        record.accountNumber = line.substring(5, 17).trim(); // 12 chars
+        const amountStr = line.substring(18, 32); // 14 chars
         record.amount = parseInt(amountStr, 10) / 100;
-        record.bankCode = line.substring(36, 39).trim();
+        record.bankCode = line.substring(32, 36).trim(); // 4 chars
         
-        const optionalPart = line.substring(39).trim();
-        const idNumberMatch = optionalPart.match(/^[A-Z0-9]{10}/);
-        record.idNumber = idNumberMatch ? idNumberMatch[0] : '';
+        const remainingLine = line.substring(36);
         
-        const emailPart = idNumberMatch ? optionalPart.substring(10).trim() : optionalPart;
-        record.email = emailPart.split(/\s+/)[0] || '';
+        // Extract ID (10 chars) and Email
+        const potentialId = remainingLine.substring(0, 10).trim();
+        record.idNumber = potentialId;
+
+        let emailStartIndex = 10; // After 10 chars for ID
+        if (remainingLine.length > emailStartIndex && remainingLine[emailStartIndex] === ' ') {
+            emailStartIndex++; // Skip the space if it exists
+        }
+        record.email = remainingLine.substring(emailStartIndex).trim();
         
         record.name = '';
         
