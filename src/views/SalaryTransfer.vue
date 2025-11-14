@@ -1,10 +1,5 @@
 <template>
-  <v-container>
-    <v-row>
-      <v-col cols="12">
-        <h1 class="text-h4">薪資轉帳</h1>
-      </v-col>
-    </v-row>
+  <div>
     <v-data-table
       :headers="headers"
       :items="records"
@@ -13,13 +8,15 @@
     >
       <template v-slot:top>
         <v-toolbar flat>
-          <v-toolbar-title>薪資資料</v-toolbar-title>
+          <v-toolbar-title>薪資轉帳</v-toolbar-title>
           <v-divider class="mx-4" inset vertical></v-divider>
           <v-spacer></v-spacer>
           <v-dialog v-model="dialog" max-width="500px">
             <template v-slot:activator="{ on, attrs }">
+              <v-btn color="primary" dark class="mb-2" @click="importDialog = true">匯入<v-icon small> fas fa-upload </v-icon></v-btn>
               <v-btn color="primary" dark class="mb-2" v-bind="attrs" v-on="on">
-                新增資料
+                新增單筆
+                <v-icon small> fas fa-plus-circle </v-icon>
               </v-btn>
             </template>
             <v-card @keydown.enter.prevent="save">
@@ -107,10 +104,23 @@
     </v-data-table>
     <br />
     <v-btn color="success" @click="generateFile" class="float-right">
-      產生薪資轉帳檔
+      匯出(給Ecash)
       <v-icon small>fas fa-download</v-icon>
     </v-btn>
-  </v-container>
+    <v-dialog v-model="importDialog" width="85%">
+      <v-card>
+        <v-card-title primary-title> 匯入舊資料 </v-card-title>
+        <v-card-text>
+          <v-textarea
+            outlined
+            label="請手動貼上之前匯出的txt檔案內容"
+            v-model="importText"
+          ></v-textarea>
+        </v-card-text>
+      </v-card>
+      <v-btn color="info" @click="importFromText">匯入</v-btn>
+    </v-dialog>
+  </div>
 </template>
 
 <script>
@@ -125,6 +135,8 @@ export default {
     return {
       dialog: false,
       dialogDelete: false,
+      importDialog: false,
+      importText: null,
       headers: [
         { text: "排序", value: "sort", sortable: false },
         { text: '戶名', value: 'name' },
@@ -151,7 +163,7 @@ export default {
   },
   computed: {
     formTitle() {
-      return this.editedIndex === -1 ? '新增資料' : '編輯資料';
+      return this.editedIndex === -1 ? '新增匯款資料' : '編輯匯款資料';
     },
   },
   watch: {
@@ -209,27 +221,50 @@ export default {
       this.close();
     },
     generateFile() {
-      let header = 'H'.padEnd(500, ' ') + '\n';
+      let header = 'H'.padEnd(500, ' ') + '\r\n';
       let content = this.records
         .map(record => {
           const recordType = '20000';
           const accountNumber = String(record.accountNumber).padEnd(12, ' ');
-          const unknownField = '0'; // As per example
+          const unknownField = '0';
           const amount = String(record.amount).padStart(7, '0');
           const bankCode = String(record.bankCode).padEnd(4, ' ');
           let line = `${recordType}${accountNumber}${unknownField}00000${amount}${bankCode}`;
           return line.padEnd(500, ' ');
         })
-        .join('\n');
+        .join('\r\n');
 
       const fileContent = header + content;
       const blob = new Blob([fileContent], { type: 'text/plain;charset=big5' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
-      link.download = 'salary_transfer.txt';
+      
+      const today = new Date();
+      const year = today.getFullYear() - 1911;
+      const month = String(today.getMonth() + 1).padStart(2, '0');
+      link.download = `salary_${year}${month}.txt`;
+      
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
+    },
+    importFromText() {
+      if (this.importText == null || this.importText.length == 0) {
+        alert("請先輸入資料");
+        return
+      }
+      let lines = this.importText.split("\n").filter(line => line.trim().startsWith('20000'));
+      this.records = [];
+      lines.forEach((line) => {
+        let record = {};
+        record["accountNumber"] = line.slice(5, 17).trim();
+        record["amount"] = parseInt(line.slice(23, 30));
+        record["bankCode"] = line.slice(30, 34).trim();
+        record["name"] = ""; // Name is not in the file
+        this.records.push(record);
+      });
+      this.importDialog = false;
+      alert("匯入成功");
     },
     saveToLocalStorage() {
       let encryptedStr = encrypt(JSON.stringify(this.records), "SalaryTransferKey");
