@@ -153,13 +153,13 @@ export default {
         name: '',
         accountNumber: '',
         amount: 0,
-        bankCode: '',
+        bankCode: '822',
       },
       defaultItem: {
         name: '',
         accountNumber: '',
         amount: 0,
-        bankCode: '',
+        bankCode: '822',
       },
     };
   },
