@@ -16,6 +16,25 @@
         ></v-file-input>
       </v-col>
     </v-row>
+    <v-row v-if="parsedData.length > 0">
+      <v-col cols="12">
+        <v-btn color="primary" @click="generateFile">產生薪資轉帳檔</v-btn>
+      </v-col>
+    </v-row>
+    <v-row v-if="parsedData.length > 0">
+      <v-col cols="12">
+        <v-card>
+          <v-card-title>解析後資料</v-card-title>
+          <v-card-text>
+            <v-data-table
+              :headers="headers"
+              :items="parsedData"
+              class="elevation-1"
+            ></v-data-table>
+          </v-card-text>
+        </v-card>
+      </v-col>
+    </v-row>
     <v-row v-if="fileContent">
       <v-col cols="12">
         <v-card>
@@ -35,6 +54,12 @@ export default {
   data() {
     return {
       fileContent: null,
+      parsedData: [],
+      headers: [
+        { text: '帳號', value: 'accountNumber' },
+        { text: '金額', value: 'amount' },
+        { text: '銀行代碼', value: 'bankCode' },
+      ],
     };
   },
   methods: {
@@ -45,8 +70,39 @@ export default {
       const reader = new FileReader();
       reader.onload = (e) => {
         this.fileContent = e.target.result;
+        this.parseFileContent(this.fileContent);
       };
       reader.readAsText(file, 'big5'); // 假設檔案編碼為 big5
+    },
+    parseFileContent(content) {
+      const lines = content.split('\n').filter(line => line.trim().length > 0);
+      this.parsedData = lines.slice(1).map(line => {
+        const recordType = line.substring(0, 5);
+        if (recordType === '20000') {
+          const accountNumber = line.substring(5, 17);
+          const amount = parseInt(line.substring(18, 25), 10);
+          const bankCode = line.substring(25, 29);
+          return { accountNumber, amount, bankCode };
+        }
+        return null;
+      }).filter(item => item !== null);
+    },
+    async generateFile() {
+      const response = await fetch('/default.template');
+      const template = await response.text();
+      
+      let output = template;
+      this.parsedData.forEach((row, index) => {
+        output += `AccountCode${index + 1}=${row.accountNumber}\n`;
+        output += `AccountAmount${index + 1}=${row.amount}\n`;
+      });
+
+      const blob = new Blob([output], { type: 'text/plain;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'salary_transfer.txt';
+      link.click();
+      URL.revokeObjectURL(link.href);
     },
   },
 };
