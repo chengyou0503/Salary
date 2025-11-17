@@ -37,7 +37,7 @@
                       <v-text-field
                         v-model="editedItem.accountNumber"
                         label="帳號"
-                        maxlength="11"
+                        maxlength="7"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -54,6 +54,22 @@
                         v-model="editedItem.bankCode"
                         label="銀行代碼"
                         maxlength="5"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="editedItem.idNumber"
+                        label="身分證號"
+                        maxlength="10"
+                        clearable
+                      ></v-text-field>
+                    </v-col>
+                    <v-col cols="12">
+                      <v-text-field
+                        v-model="editedItem.email"
+                        label="Email"
+                        maxlength="40"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -92,6 +108,8 @@
             <td>{{ item.accountNumber }}</td>
             <td>{{ item.amount }}</td>
             <td>{{ item.bankCode }}</td>
+            <td>{{ item.idNumber }}</td>
+            <td>{{ item.email }}</td>
             <td>
               <v-icon small class="mr-2" @click="editItem(item)">
                 fas fa-edit
@@ -143,6 +161,8 @@ export default {
         { text: '帳號', value: 'accountNumber' },
         { text: '金額', value: 'amount' },
         { text: '銀行代碼', value: 'bankCode' },
+        { text: '身分證號', value: 'idNumber' },
+        { text: 'Email', value: 'email' },
         { text: '操作', value: 'actions', sortable: false },
       ],
       records: [],
@@ -152,12 +172,16 @@ export default {
         accountNumber: '',
         amount: 0,
         bankCode: '00822',
+        idNumber: '',
+        email: '',
       },
       defaultItem: {
         name: '',
         accountNumber: '',
         amount: 0,
         bankCode: '00822',
+        idNumber: '',
+        email: '',
       },
     };
   },
@@ -221,28 +245,24 @@ export default {
       this.close();
     },
     generateFile() {
-      // Header line: H + 65 spaces + "應 發 項 目" + 9 spaces + "代 扣 項 目" + remaining spaces to 500 chars
-      const headerPart1 = 'H' + ' '.repeat(65);
-      const headerPart2 = '應 發 項 目' + ' '.repeat(9) + '代 扣 項 目';
-      const header = (headerPart1 + headerPart2).padEnd(500, ' ') + '\r\n';
-
       const content = this.records
         .map(record => {
-          const recordType = '20000'; // 5 digits
-          const accountNumber = String(record.accountNumber || '').padStart(12, '0'); // 12 digits, left-padded with '0'
-          const fixedZeros = '000000000'; // 9 digits
-          const amount = String(record.amount || 0).padStart(7, '0'); // 7 digits, left-padded with '0'
-          const bankCode = String(record.bankCode || '').padStart(5, '0'); // 5 digits, left-padded with '0'
+          const part1 = '00004';
+          const part2 = '950';
+          const accountNumber = String(record.accountNumber || '').padStart(7, '0');
+          const part4 = '0000000000';
+          const amount = String(record.amount || 0).padStart(5, '0');
+          const bankCode = String(record.bankCode || '').padStart(5, '0');
+          const idNumber = String(record.idNumber || '').padEnd(10, ' ');
+          const email = String(record.email || '').padEnd(40, ' ');
+
+          const line = `${part1}${part2}${accountNumber}${part4}${amount}${bankCode}${idNumber}${email}`;
           
-          // Combine all parts to form the 38-digit number string
-          const numericPart = `${recordType}${accountNumber}${fixedZeros}${amount}${bankCode}`;
-          
-          return numericPart.padEnd(500, ' '); // Pad entire line to 500 chars with spaces
+          return line.padEnd(500, ' ');
         })
         .join('\r\n');
 
-      const fileContent = header + content;
-      const blob = new Blob([fileContent], { type: 'text/plain;charset=big5' });
+      const blob = new Blob([content], { type: 'text/plain;charset=big5' });
       const link = document.createElement('a');
       link.href = URL.createObjectURL(blob);
       
@@ -260,17 +280,17 @@ export default {
         alert("請先輸入資料");
         return;
       }
-      const lines = this.importText.split(/\r?\n/).filter(line => line.startsWith('20000'));
+      const lines = this.importText.split(/\r?\n/);
       this.records = lines.map(line => {
         const record = {};
-        const numericPart = line.substring(0, 38); // Expect 38 digits
         
-        record.accountNumber = numericPart.substring(5, 17); // 12 chars
-        // Skip 9 zeros (17 to 26)
-        record.amount = parseInt(numericPart.substring(26, 33), 10); // 7 chars
-        record.bankCode = numericPart.substring(33, 38); // 5 chars
+        record.accountNumber = line.substring(8, 15);
+        record.amount = parseInt(line.substring(25, 30), 10);
+        record.bankCode = line.substring(30, 35);
+        record.idNumber = line.substring(35, 45).trim();
+        record.email = line.substring(45, 85).trim();
         
-        record.name = ''; // Name is not in the file
+        record.name = '';
         
         return record;
       });
