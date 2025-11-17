@@ -37,7 +37,7 @@
                       <v-text-field
                         v-model="editedItem.accountNumber"
                         label="帳號"
-                        maxlength="12"
+                        maxlength="11"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -221,21 +221,23 @@ export default {
       this.close();
     },
     generateFile() {
+      // Header line: H + 65 spaces + "應 發 項 目" + 9 spaces + "代 扣 項 目" + remaining spaces to 500 chars
       const headerPart1 = 'H' + ' '.repeat(65);
       const headerPart2 = '應 發 項 目' + ' '.repeat(9) + '代 扣 項 目';
       const header = (headerPart1 + headerPart2).padEnd(500, ' ') + '\r\n';
 
       const content = this.records
         .map(record => {
-          const recordType = '20000';
-          const accountNumber = String(record.accountNumber || '').padStart(12, '0');
-          const zeros = '000000000';
-          const amount = String(record.amount || 0).padStart(7, '0');
-          const bankCode = String(record.bankCode || '').padStart(5, '0');
+          const recordType = '20000'; // 5 digits
+          const accountNumber = String(record.accountNumber || '').padStart(12, '0'); // 12 digits, left-padded with '0'
+          const fixedZeros = '000000000'; // 9 digits
+          const amount = String(record.amount || 0).padStart(7, '0'); // 7 digits, left-padded with '0'
+          const bankCode = String(record.bankCode || '').padStart(5, '0'); // 5 digits, left-padded with '0'
           
-          const numericPart = `${recordType}${accountNumber}${zeros}${amount}${bankCode}`;
+          // Combine all parts to form the 38-digit number string
+          const numericPart = `${recordType}${accountNumber}${fixedZeros}${amount}${bankCode}`;
           
-          return numericPart.padEnd(500, ' ');
+          return numericPart.padEnd(500, ' '); // Pad entire line to 500 chars with spaces
         })
         .join('\r\n');
 
@@ -261,13 +263,14 @@ export default {
       const lines = this.importText.split(/\r?\n/).filter(line => line.startsWith('20000'));
       this.records = lines.map(line => {
         const record = {};
-        const numericPart = line.substring(0, 36);
+        const numericPart = line.substring(0, 38); // Expect 38 digits
         
-        record.accountNumber = numericPart.substring(5, 17);
-        record.amount = parseInt(numericPart.substring(26, 33), 10);
-        record.bankCode = numericPart.substring(33, 38);
+        record.accountNumber = numericPart.substring(5, 17); // 12 chars
+        // Skip 9 zeros (17 to 26)
+        record.amount = parseInt(numericPart.substring(26, 33), 10); // 7 chars
+        record.bankCode = numericPart.substring(33, 38); // 5 chars
         
-        record.name = '';
+        record.name = ''; // Name is not in the file
         
         return record;
       });
