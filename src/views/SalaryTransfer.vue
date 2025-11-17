@@ -221,7 +221,7 @@ export default {
       this.close();
     },
     generateFile() {
-      // Header line with Big5 characters and specific spacing
+      // Header line: H + 65 spaces + "應 發 項 目" + 9 spaces + "代 扣 項 目" + remaining spaces to 500 chars
       const headerPart1 = 'H' + ' '.repeat(65);
       const headerPart2 = '應 發 項 目' + ' '.repeat(9) + '代 扣 項 目';
       const header = (headerPart1 + headerPart2).padEnd(500, ' ') + '\r\n';
@@ -234,8 +234,11 @@ export default {
           const amount = String((record.amount || 0) * 100).padStart(13, '0'); // 13 digits, amount * 100, left-padded with '0'
           const bankCode = String(record.bankCode || '').padStart(4, '0'); // 4 digits, left-padded with '0'
           
-          let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
-          return line.padEnd(500, ' '); // Pad entire line to 500 chars with spaces
+          // Combine all parts to form the 30-digit number string
+          const numericPart = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
+          
+          // Pad the entire line to 500 characters with spaces
+          return numericPart.padEnd(500, ' ');
         })
         .join('\r\n');
 
@@ -261,10 +264,13 @@ export default {
       const lines = this.importText.split(/\r?\n/).filter(line => line.startsWith('20000'));
       this.records = lines.map(line => {
         const record = {};
-        record.accountNumber = line.substring(5, 17).trim(); // 12 chars
-        const amountStr = line.substring(18, 31); // 13 chars
+        // Parse the 30-digit numeric part
+        const numericPart = line.substring(0, 30);
+        
+        record.accountNumber = numericPart.substring(5, 17).trim(); // 12 chars
+        const amountStr = numericPart.substring(18, 31); // 13 chars
         record.amount = parseInt(amountStr, 10) / 100;
-        record.bankCode = line.substring(31, 35).trim(); // 4 chars
+        record.bankCode = numericPart.substring(31, 35).trim(); // 4 chars
         
         record.name = ''; // Name is not in the file
         
