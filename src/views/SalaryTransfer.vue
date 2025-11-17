@@ -33,13 +33,6 @@
                         clearable
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" sm="6">
-                      <v-text-field
-                        v-model="editedItem.idNumber"
-                        label="身分證號 (可選)"
-                        clearable
-                      ></v-text-field>
-                    </v-col>
                     <v-col cols="12">
                       <v-text-field
                         v-model="editedItem.accountNumber"
@@ -61,13 +54,6 @@
                         v-model="editedItem.bankCode"
                         label="銀行代碼"
                         maxlength="4"
-                        clearable
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12">
-                      <v-text-field
-                        v-model="editedItem.email"
-                        label="Email (可選)"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -106,8 +92,6 @@
             <td>{{ item.accountNumber }}</td>
             <td>{{ item.amount }}</td>
             <td>{{ item.bankCode }}</td>
-            <td>{{ item.idNumber }}</td>
-            <td>{{ item.email }}</td>
             <td>
               <v-icon small class="mr-2" @click="editItem(item)">
                 fas fa-edit
@@ -123,8 +107,6 @@
       匯出(給Ecash)
       <v-icon small>fas fa-download</v-icon>
     </v-btn>
-    <v-btn color="info" href="/Salary/salary_test.txt" download="salary_test.txt">下載測試檔</v-btn>
-    <v-btn color="info" href="/Salary/salary_exact_copy.txt" download="salary_exact_copy.txt">下載完全複製測試檔</v-btn>
     <v-dialog v-model="importDialog" width="85%">
       <v-card>
         <v-card-title primary-title> 匯入舊資料 </v-card-title>
@@ -161,8 +143,6 @@ export default {
         { text: '帳號', value: 'accountNumber' },
         { text: '金額', value: 'amount' },
         { text: '銀行代碼', value: 'bankCode' },
-        { text: '身分證號', value: 'idNumber' },
-        { text: 'Email', value: 'email' },
         { text: '操作', value: 'actions', sortable: false },
       ],
       records: [],
@@ -172,16 +152,12 @@ export default {
         accountNumber: '',
         amount: 0,
         bankCode: '822',
-        idNumber: '',
-        email: '',
       },
       defaultItem: {
         name: '',
         accountNumber: '',
         amount: 0,
         bankCode: '822',
-        idNumber: '',
-        email: '',
       },
     };
   },
@@ -252,27 +228,14 @@ export default {
 
       const content = this.records
         .map(record => {
-          const recordType = '20000';
-          const accountNumber = String(record.accountNumber || '').padEnd(12, ' '); // 12 chars, right-padded with spaces
-          const flag = '0'; // 1 char
-          const amount = String((record.amount || 0) * 100).padStart(14, '0'); // 14 chars, left-padded with zeros
-          const bankCode = String(record.bankCode || '').padStart(4, '0'); // 4 chars, left-padded with zeros
+          const recordType = '20000'; // 5 digits
+          const accountNumber = String(record.accountNumber || '').padStart(12, '0'); // 12 digits, left-padded with '0'
+          const flag = '0'; // 1 digit, fixed '0'
+          const amount = String((record.amount || 0) * 100).padStart(13, '0'); // 13 digits, amount * 100, left-padded with '0'
+          const bankCode = String(record.bankCode || '').padStart(4, '0'); // 4 digits, left-padded with '0'
           
           let line = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
-          
-          let optionalPart = '';
-          if (record.idNumber) {
-            optionalPart += String(record.idNumber).padEnd(10, ' '); // 10 chars, right-padded with spaces
-          } else {
-            optionalPart += ' '.repeat(10); // Reserve 10 spaces if no ID
-          }
-
-          if (record.email) {
-            optionalPart += ' ' + record.email; // Precede email with a space
-          }
-          
-          line += optionalPart;
-          return line.padEnd(500, ' '); // Pad entire line to 500 chars
+          return line.padEnd(500, ' '); // Pad entire line to 500 chars with spaces
         })
         .join('\r\n');
 
@@ -299,23 +262,11 @@ export default {
       this.records = lines.map(line => {
         const record = {};
         record.accountNumber = line.substring(5, 17).trim(); // 12 chars
-        const amountStr = line.substring(18, 32); // 14 chars
+        const amountStr = line.substring(18, 31); // 13 chars
         record.amount = parseInt(amountStr, 10) / 100;
-        record.bankCode = line.substring(32, 36).trim(); // 4 chars
+        record.bankCode = line.substring(31, 35).trim(); // 4 chars
         
-        const remainingLine = line.substring(36);
-        
-        // Extract ID (10 chars) and Email
-        const potentialId = remainingLine.substring(0, 10).trim();
-        record.idNumber = potentialId;
-
-        let emailStartIndex = 10; // After 10 chars for ID
-        if (remainingLine.length > emailStartIndex && remainingLine[emailStartIndex] === ' ') {
-            emailStartIndex++; // Skip the space if it exists
-        }
-        record.email = remainingLine.substring(emailStartIndex).trim();
-        
-        record.name = '';
+        record.name = ''; // Name is not in the file
         
         return record;
       });
