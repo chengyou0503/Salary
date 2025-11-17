@@ -41,19 +41,11 @@
                         clearable
                       ></v-text-field>
                     </v-col>
-                    <v-col cols="12" sm="6">
+                    <v-col cols="12">
                       <v-text-field
                         v-model="editedItem.amount"
                         label="金額"
                         type="number"
-                        clearable
-                      ></v-text-field>
-                    </v-col>
-                    <v-col cols="12" sm="6">
-                      <v-text-field
-                        v-model="editedItem.bankCode"
-                        label="銀行代碼"
-                        maxlength="4"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -91,7 +83,6 @@
             <td>{{ item.name }}</td>
             <td>{{ item.accountNumber }}</td>
             <td>{{ item.amount }}</td>
-            <td>{{ item.bankCode }}</td>
             <td>
               <v-icon small class="mr-2" @click="editItem(item)">
                 fas fa-edit
@@ -142,7 +133,6 @@ export default {
         { text: '戶名', value: 'name' },
         { text: '帳號', value: 'accountNumber' },
         { text: '金額', value: 'amount' },
-        { text: '銀行代碼', value: 'bankCode' },
         { text: '操作', value: 'actions', sortable: false },
       ],
       records: [],
@@ -151,13 +141,11 @@ export default {
         name: '',
         accountNumber: '',
         amount: 0,
-        bankCode: '822',
       },
       defaultItem: {
         name: '',
         accountNumber: '',
         amount: 0,
-        bankCode: '822',
       },
     };
   },
@@ -232,7 +220,7 @@ export default {
           const accountNumber = String(record.accountNumber || '').padStart(11, '0'); // 11 digits, left-padded with '0'
           const fixedZeros = '000000000'; // 9 digits
           const amount = String(record.amount || 0).padStart(7, '0'); // 7 digits, left-padded with '0'
-          const bankCode = String(record.bankCode || '').padStart(4, '0'); // 4 digits, left-padded with '0'
+          const bankCode = '0822'; // 4 digits, fixed
           
           // Combine all parts to form the 36-digit number string
           const numericPart = `${recordType}${accountNumber}${fixedZeros}${amount}${bankCode}`;
@@ -268,7 +256,6 @@ export default {
         record.accountNumber = numericPart.substring(5, 16); // 11 chars
         // Skip 9 zeros (16 to 25)
         record.amount = parseInt(numericPart.substring(25, 32), 10); // 7 chars
-        record.bankCode = numericPart.substring(32, 36); // 4 chars
         
         record.name = ''; // Name is not in the file
         
