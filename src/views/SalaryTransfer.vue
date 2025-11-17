@@ -53,7 +53,7 @@
                       <v-text-field
                         v-model="editedItem.bankCode"
                         label="銀行代碼"
-                        maxlength="4"
+                        maxlength="5"
                         clearable
                       ></v-text-field>
                     </v-col>
@@ -151,13 +151,13 @@ export default {
         name: '',
         accountNumber: '',
         amount: 0,
-        bankCode: '822',
+        bankCode: '00822',
       },
       defaultItem: {
         name: '',
         accountNumber: '',
         amount: 0,
-        bankCode: '822',
+        bankCode: '00822',
       },
     };
   },
@@ -221,23 +221,20 @@ export default {
       this.close();
     },
     generateFile() {
-      // Header line: H + 65 spaces + "應 發 項 目" + 9 spaces + "代 扣 項 目" + remaining spaces to 500 chars
       const headerPart1 = 'H' + ' '.repeat(65);
       const headerPart2 = '應 發 項 目' + ' '.repeat(9) + '代 扣 項 目';
       const header = (headerPart1 + headerPart2).padEnd(500, ' ') + '\r\n';
 
       const content = this.records
         .map(record => {
-          const recordType = '20000'; // 5 digits
-          const accountNumber = String(record.accountNumber || '').padStart(12, '0'); // 12 digits, left-padded with '0'
-          const flag = '0'; // 1 digit, fixed '0'
-          const amount = String((record.amount || 0) * 100).padStart(13, '0'); // 13 digits, amount * 100, left-padded with '0'
-          const bankCode = String(record.bankCode || '').padStart(4, '0'); // 4 digits, left-padded with '0'
+          const recordType = '20000';
+          const accountNumber = String(record.accountNumber || '').padStart(12, '0');
+          const zeros = '000000000';
+          const amount = String(record.amount || 0).padStart(7, '0');
+          const bankCode = String(record.bankCode || '').padStart(5, '0');
           
-          // Combine all parts to form the 30-digit number string
-          const numericPart = `${recordType}${accountNumber}${flag}${amount}${bankCode}`;
+          const numericPart = `${recordType}${accountNumber}${zeros}${amount}${bankCode}`;
           
-          // Pad the entire line to 500 characters with spaces
           return numericPart.padEnd(500, ' ');
         })
         .join('\r\n');
@@ -264,15 +261,13 @@ export default {
       const lines = this.importText.split(/\r?\n/).filter(line => line.startsWith('20000'));
       this.records = lines.map(line => {
         const record = {};
-        // Parse the 30-digit numeric part
-        const numericPart = line.substring(0, 30);
+        const numericPart = line.substring(0, 36);
         
-        record.accountNumber = numericPart.substring(5, 17).trim(); // 12 chars
-        const amountStr = numericPart.substring(18, 31); // 13 chars
-        record.amount = parseInt(amountStr, 10) / 100;
-        record.bankCode = numericPart.substring(31, 35).trim(); // 4 chars
+        record.accountNumber = numericPart.substring(5, 17);
+        record.amount = parseInt(numericPart.substring(26, 33), 10);
+        record.bankCode = numericPart.substring(33, 38);
         
-        record.name = ''; // Name is not in the file
+        record.name = '';
         
         return record;
       });
